@@ -1,4 +1,5 @@
-from py2neo import Graph, Node, Relationship
+from py2neo import Graph, NodeMatcher
+from py2neo.data import Node, Relationship
 from passlib.hash import bcrypt
 from datetime import datetime
 import os
@@ -9,13 +10,14 @@ username = os.environ.get('NEO4J_USERNAME')
 password = os.environ.get('NEO4J_PASSWORD')
 
 graph = Graph(url + '/db/data/', username=username, password=password)
+matcher = NodeMatcher(graph)
 
 class User:
     def __init__(self, username):
         self.username = username
 
     def find(self):
-        user = graph.find_one('User', 'username', self.username)
+        user = matcher.match('User', username=self.username).first()
         return user
 
     def register(self, password):
@@ -56,7 +58,7 @@ class User:
 
     def like_post(self, post_id):
         user = self.find()
-        post = graph.find_one('Post', 'id', post_id)
+        post = matcher.match('Post', id=post_id).first()
         graph.merge(Relationship(user, 'LIKED', post))
 
     def get_recent_posts(self):
